@@ -1,4 +1,4 @@
-import { keyboardManager } from "@/keyboard";
+import { keyboardManager } from "@/control/keyboard";
 import { eventBus } from "@/event-bus";
 
 describe("KeyboardManager2", () => {
