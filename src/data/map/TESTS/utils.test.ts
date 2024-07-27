@@ -3,7 +3,7 @@ import {
     generate3DArray,
     traverse2DArray,
     traverse3DArray
-} from "@/map/utils";
+} from "@/data/map/utils";
 
 // We don't test math functions, because they are too simple and don't have any side effects.
 

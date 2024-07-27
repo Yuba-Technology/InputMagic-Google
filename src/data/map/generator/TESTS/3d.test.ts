@@ -1,7 +1,7 @@
-import { Block, BlockPos } from "@/map/block";
-import { Chunk } from "@/map/chunk";
-import { Generator3D } from "@/map/generator/3d";
-import { traverse3DArray } from "@/map/utils";
+import { Block, BlockPos } from "@/data/map/block";
+import { Chunk } from "@/data/map/chunk";
+import { Generator3D } from "@/data/map/generator/3d";
+import { traverse3DArray } from "@/data/map/utils";
 
 describe("MapGenerator", () => {
     let generator3D: Generator3D;

@@ -1,4 +1,4 @@
-import { Block } from "@/map/block";
+import { Block } from "@/data/map/block";
 
 describe("Block", () => {
     it("should correctly construct a block", () => {

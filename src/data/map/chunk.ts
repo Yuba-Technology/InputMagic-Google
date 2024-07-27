@@ -1,8 +1,8 @@
-import { Block, BlockPos } from "@/map/block";
-import { Entity } from "@/entity/entity";
+import { Block, BlockPos } from "@/data/map/block";
+import { Entity } from "@/data/entity/entity";
 
 const CHUNK_SIZE = 16;
-const CHUNK_HEIGHT = 16;
+const CHUNK_HEIGHT = 32;
 
 /**
  * Relative block position inside a chunk.

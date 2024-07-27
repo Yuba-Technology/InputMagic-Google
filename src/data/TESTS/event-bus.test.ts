@@ -1,4 +1,4 @@
-import { eventBus } from "@/event-bus";
+import { eventBus } from "@/data/event-bus";
 
 describe("EventBus", () => {
     it("should correctly subscribe and emit events", async () => {

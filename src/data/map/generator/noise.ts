@@ -1,4 +1,4 @@
-import Perlin from "@/map/generator/lib/perlin";
+import Perlin from "@/data/map/generator/lib/perlin";
 
 type PerlinNoiseConfig = {
     seed?: string;

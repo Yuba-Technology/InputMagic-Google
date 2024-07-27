@@ -1,4 +1,4 @@
-import { Chunk } from "@/map/chunk";
+import { Chunk } from "@/data/map/chunk";
 
 describe("Chunk", () => {
     let chunk: Chunk;

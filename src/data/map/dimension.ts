@@ -1,7 +1,7 @@
-import { Block, BlockPos } from "@/map/block";
-import { Chunk, ChunkPos } from "@/map/chunk";
-import { Generator3D } from "@/map/generator/3d";
-import { generate2DArray } from "@/map/utils";
+import { Block, BlockPos } from "@/data/map/block";
+import { Chunk, ChunkPos } from "@/data/map/chunk";
+import { Generator3D } from "@/data/map/generator/3d";
+import { generate2DArray, generate3DArray } from "@/data/map/utils";
 
 /**
  * The configuration for a dimension in the world.
@@ -166,6 +166,31 @@ class Dimension {
 
         const relativePos = chunk.absoluteToRelativePosition(pos);
         chunk.blocks[relativePos.x][relativePos.y][relativePos.z] = block;
+    }
+
+    getBlockArray(start: BlockPos, end: BlockPos): Block[][][] {
+        start = {
+            x: Math.min(start.x, end.x),
+            y: Math.min(start.y, end.y),
+            z: Math.min(start.z, end.z)
+        };
+
+        return generate3DArray(
+            {
+                x: Math.abs(end.x - start.x) + 1,
+                y: Math.abs(end.y - start.y) + 1,
+                z: Math.abs(end.z - start.z) + 1
+            },
+            (relativePos) => {
+                const absolutePos = {
+                    x: start.x + relativePos.x,
+                    y: start.y + relativePos.y,
+                    z: start.z + relativePos.z
+                };
+
+                return this.getBlock(absolutePos)!;
+            }
+        );
     }
 }
 

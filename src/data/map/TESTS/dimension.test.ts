@@ -1,7 +1,7 @@
-import { BlockPos } from "@/map/block";
-import { Chunk, ChunkPos } from "@/map/chunk";
-import { Dimension } from "@/map/dimension";
-import { chebyshevDistance, generate2DArray } from "@/map/utils";
+import { BlockPos } from "@/data/map/block";
+import { Chunk, ChunkPos } from "@/data/map/chunk";
+import { Dimension } from "@/data/map/dimension";
+import { chebyshevDistance, generate2DArray } from "@/data/map/utils";
 
 const chunkPos: ChunkPos = { x: 0, y: 0 };
 const invalidChunkPos: ChunkPos = { x: 2, y: 2 };
