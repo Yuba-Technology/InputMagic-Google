@@ -1,5 +1,5 @@
 import { KeyEvent } from "@/control/keyboard";
-import { eventBus } from "@/event-bus";
+import { eventBus } from "@/data/event-bus";
 
 type Direction = "up" | "down" | "left" | "right";
 type PlayerMoveEventData = {

@@ -1,4 +1,4 @@
-import { eventBus } from "@/event-bus";
+import { eventBus } from "@/data/event-bus";
 
 /**
  * Structure of the event data emitted by the KeyboardManager.
