@@ -5,13 +5,15 @@ import {
     Container,
     ContainerChild,
     Texture,
-    RenderTexture
+    Ticker
 } from "pixi.js";
 import { BlockPos, Block, EmptyBlock } from "@/data/map/block";
 import { Chunk } from "@/data/map/chunk";
 import { Dimension } from "@/data/map/dimension";
 import { Generator3D } from "@/data/map/generator/3d";
 import { generate2DArray, traverse3DArray } from "@/data/map/utils";
+import { eventBus } from "@/data/event-bus";
+import { PlayerMoveEventData } from "@/control/player";
 
 /**
  * !IMPORTANT: The coordinate system used in rendering
@@ -192,6 +194,23 @@ const yMaxChunkLength =
 const offsetX = Math.floor(xMaxChunkLength / 2);
 const offsetY = Math.floor(yMaxChunkLength / 2);
 
+const moveFunctions: {
+    [key: string]: (stage: Container, time: Ticker) => void;
+} = {
+    up(stage, time) {
+        stage.y += time.deltaTime;
+    },
+    down(stage, time) {
+        stage.y -= time.deltaTime;
+    },
+    left(stage, time) {
+        stage.x += time.deltaTime;
+    },
+    right(stage, time) {
+        stage.x -= time.deltaTime;
+    }
+};
+
 class Render {
     private static instance: Render;
     app: Application;
@@ -206,6 +225,7 @@ class Render {
     private currentXOffset: number = 0;
     private currentYOffset: number = 0;
     private center: CenterPos = { x: 0, y: 0 };
+    private tickerTaskList: ((stage: Container, time: Ticker) => void)[] = [];
 
     constructor() {
         this.app = new Application({
@@ -215,10 +235,39 @@ class Render {
         });
         // @ts-expect-error No error!!!!!!!!!
         globalThis.__PIXI_APP__ = this.app;
+
+        eventBus.on("player:move", (data) => {
+            this.tickerTaskList = [];
+            const { directions } = data as PlayerMoveEventData;
+            for (const direction of directions) {
+                this.tickerTaskList.push(moveFunctions[direction]);
+            }
+        });
     }
 
     private async init() {
         await this.app.init({ background: "#1099bb", resizeTo: window });
+        this.app.ticker.add((time) => {
+            for (const task of this.tickerTaskList) {
+                task(this.app.stage, time);
+            }
+
+            if (this.willOutOfScreen().includes("top")) {
+                this.addTopRow();
+            }
+
+            if (this.willOutOfScreen().includes("bottom")) {
+                this.addBottomRow();
+            }
+
+            if (this.willOutOfScreen().includes("right")) {
+                this.addRightColumn();
+            }
+
+            if (this.willOutOfScreen().includes("left")) {
+                this.addLeftColumn();
+            }
+        });
         document.body.append(this.app.canvas);
     }
 
@@ -282,7 +331,10 @@ class Render {
         container.addChild(sprite);
     }
 
-    renderRChunk(blockArray: Block[][][], stagePos: { x: number; y: number }) {
+    private renderRChunk(
+        blockArray: Block[][][],
+        stagePos: { x: number; y: number }
+    ) {
         const container = new Container();
         traverse3DArray(blockArray, (value: Block, pos: BlockPos) => {
             if (value instanceof EmptyBlock) return;
@@ -456,7 +508,7 @@ class Render {
         );
     }
 
-    addTopRow() {
+    private addTopRow() {
         const row: Container[] = [];
         // eslint-disable-next-line unicorn/no-array-for-each
         this.rengerGrid.pop()?.forEach((container) => {
@@ -515,7 +567,7 @@ class Render {
         );
     }
 
-    addRightColumn() {
+    private addRightColumn() {
         this.currentXOffset++;
 
         for (let y = 0; y < yMaxChunkLength; y++) {
@@ -561,7 +613,7 @@ class Render {
     }
 
     // 向最下方添加一排区块
-    addBottomRow() {
+    private addBottomRow() {
         const row: Container[] = [];
         // eslint-disable-next-line unicorn/no-array-for-each
         this.rengerGrid.shift()?.forEach((container) => {
@@ -614,7 +666,7 @@ class Render {
         this.app.stage.addChild(...row);
     }
 
-    addLeftColumn() {
+    private addLeftColumn() {
         this.currentXOffset--;
 
         // console.log(this.currentXOffset, this.currentYOffset);
@@ -672,7 +724,7 @@ class Render {
     }
 
     // 是否将要超出屏幕
-    willOutOfScreen() {
+    private willOutOfScreen() {
         const result = [];
         const leftContainer = this.rengerGrid[0][0];
         // console.log("Left:", this.app.stage.x + leftContainer.x);
@@ -778,7 +830,7 @@ render.initStage();
 // @ts-expect-error No error!!!!!!!!!
 window.render = render;
 // render.addLeftColumn();
-render.addTopRow();
+// render.addTopRow();
 // render.addLeftColumn();
 // render.addLeftColumn();
 // render.addBottomRow();
@@ -802,66 +854,66 @@ render.addTopRow();
 // }, 5000);
 // render.addBottomRow();
 
-render.app.ticker.add((time) => {
-    // render.app.stage.x += Math.sin(60) * time.deltaTime;
-    // render.app.stage.y += Math.cos(60) * time.deltaTime;
-    // render.app.stage.x += Math.round(Math.sin(60) * time.deltaTime);
-    // render.app.stage.y += Math.round(Math.cos(60) * time.deltaTime);
-    // render.app.stage.x += time.deltaTime;
-    render.app.stage.y += time.deltaTime;
-    // render.app.stage.y += time.deltaTime;
-    // render.app.stage.x -= time.deltaTime / 2;
-    // render.app.stage.y += time.deltaTime / 10;
-    // for (const row of render.rengerGrid) {
-    //     for (const chunk of row) {
-    //         if (!chunk) continue;
-    //         // chunk.y += time.deltaTime;
-    //         // chunk.x -= time.deltaTime;
-    //         // chunk.x -= time.deltaTime / 5;
-    //         chunk.y += time.deltaTime;
-    //         // if (chunk.y < -rendeerChunkHeight) {
-    //         //     chunk.y = yMaxChunkLength * rendeerChunkHeight;
-    //         // }
-    //     }
-    // }
+// render.app.ticker.add((time) => {
+//     // render.app.stage.x += Math.sin(60) * time.deltaTime;
+//     // render.app.stage.y += Math.cos(60) * time.deltaTime;
+//     // render.app.stage.x += Math.round(Math.sin(60) * time.deltaTime);
+//     // render.app.stage.y += Math.round(Math.cos(60) * time.deltaTime);
+//     // render.app.stage.x += time.deltaTime;
+//     render.app.stage.y += time.deltaTime;
+//     // render.app.stage.y += time.deltaTime;
+//     // render.app.stage.x -= time.deltaTime / 2;
+//     // render.app.stage.y += time.deltaTime / 10;
+//     // for (const row of render.rengerGrid) {
+//     //     for (const chunk of row) {
+//     //         if (!chunk) continue;
+//     //         // chunk.y += time.deltaTime;
+//     //         // chunk.x -= time.deltaTime;
+//     //         // chunk.x -= time.deltaTime / 5;
+//     //         chunk.y += time.deltaTime;
+//     //         // if (chunk.y < -rendeerChunkHeight) {
+//     //         //     chunk.y = yMaxChunkLength * rendeerChunkHeight;
+//     //         // }
+//     //     }
+//     // }
 
-    // if (render.willOutOfScreen().includes("top")) {
-    //     render.addTopRow();
-    // }
-    console.log("------------------------------------------");
-    // while (render.willOutOfScreen().includes("top")) {
-    if (render.willOutOfScreen().includes("top")) {
-        console.log("Add top row");
-        render.addTopRow();
-    }
+//     // if (render.willOutOfScreen().includes("top")) {
+//     //     render.addTopRow();
+//     // }
+//     console.log("------------------------------------------");
+//     // while (render.willOutOfScreen().includes("top")) {
+//     if (render.willOutOfScreen().includes("top")) {
+//         console.log("Add top row");
+//         render.addTopRow();
+//     }
 
-    if (render.willOutOfScreen().includes("bottom")) {
-        render.addBottomRow();
-    }
+//     if (render.willOutOfScreen().includes("bottom")) {
+//         render.addBottomRow();
+//     }
 
-    // if (render.willOutOfScreen().includes("right")) {
-    //     render.addRightColumn();
-    // }
-    // while (render.willOutOfScreen().includes("right")) {
-    if (render.willOutOfScreen().includes("right")) {
-        console.log("Add right column");
-        render.addRightColumn();
-    }
+//     // if (render.willOutOfScreen().includes("right")) {
+//     //     render.addRightColumn();
+//     // }
+//     // while (render.willOutOfScreen().includes("right")) {
+//     if (render.willOutOfScreen().includes("right")) {
+//         console.log("Add right column");
+//         render.addRightColumn();
+//     }
 
-    // if (render.willOutOfScreen().includes("left")) {
-    //     render.addLeftColumn();
-    // }
-    // while (render.willOutOfScreen().includes("left")) {
-    if (render.willOutOfScreen().includes("left")) {
-        console.log("Add left column");
-        render.addLeftColumn();
-    }
+//     // if (render.willOutOfScreen().includes("left")) {
+//     //     render.addLeftColumn();
+//     // }
+//     // while (render.willOutOfScreen().includes("left")) {
+//     if (render.willOutOfScreen().includes("left")) {
+//         console.log("Add left column");
+//         render.addLeftColumn();
+//     }
 
-    // 触发断点，暂时终止程序执行
-    // debugger;
+//     // 触发断点，暂时终止程序执行
+//     // debugger;
 
-    console.log(time.FPS);
-});
+//     console.log(time.FPS);
+// });
 
 // 计算一个区块渲染时的宽高
 // 注意这里chunk.width != width，因为区块之间渲染的时候有所重叠

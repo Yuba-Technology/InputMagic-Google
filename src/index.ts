@@ -1,3 +1,6 @@
-import "@assets/scss/index.scss";
+import { eventBus } from "./data/event-bus";
+import { keyboardManager } from "./control/keyboard";
+import "@/control/player";
+import "@/render/render";
 
-document.body.innerHTML = "<h1>Hello World</h1>";
+keyboardManager.start();
