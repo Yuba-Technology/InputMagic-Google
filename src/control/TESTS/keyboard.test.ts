@@ -1,5 +1,5 @@
 import { keyboardManager } from "@/control/keyboard";
-import { eventBus } from "@/event-bus";
+import { eventBus } from "@/data/event-bus";
 
 describe("KeyboardManager2", () => {
     let keydownEvent: KeyboardEvent;
