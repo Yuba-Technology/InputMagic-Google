@@ -5,7 +5,8 @@ import {
     Container,
     ContainerChild,
     Texture,
-    Ticker
+    Ticker,
+    Point
 } from "pixi.js";
 import { BlockPos, Block, EmptyBlock } from "@/data/map/block";
 import { Chunk } from "@/data/map/chunk";
@@ -90,6 +91,21 @@ type CenterPos = {
     x: number;
     y: number;
 };
+
+class ExtendedSprite extends Sprite {
+    pos: RenderBlockPos;
+    containerCenter: { x: number; y: number };
+
+    constructor(
+        texture: Texture,
+        pos: RenderBlockPos,
+        containerCenter: { x: number; y: number }
+    ) {
+        super(texture);
+        this.pos = pos;
+        this.containerCenter = containerCenter;
+    }
+}
 
 function getRenderFactor(pos: RenderBlockPos) {
     // *Magic. Do not touch.
@@ -198,16 +214,16 @@ const moveFunctions: {
     [key: string]: (stage: Container, time: Ticker) => void;
 } = {
     up(stage, time) {
-        stage.y += time.deltaTime;
+        stage.y += time.deltaTime * 4;
     },
     down(stage, time) {
-        stage.y -= time.deltaTime;
+        stage.y -= time.deltaTime * 4;
     },
     left(stage, time) {
-        stage.x += time.deltaTime;
+        stage.x += time.deltaTime * 4;
     },
     right(stage, time) {
-        stage.x -= time.deltaTime;
+        stage.x -= time.deltaTime * 4;
     }
 };
 
@@ -226,6 +242,8 @@ class Render {
     private currentYOffset: number = 0;
     private center: CenterPos = { x: 0, y: 0 };
     private tickerTaskList: ((stage: Container, time: Ticker) => void)[] = [];
+    counter = 0;
+    counterInterval = 10;
 
     constructor() {
         this.app = new Application({
@@ -267,6 +285,8 @@ class Render {
             if (this.willOutOfScreen().includes("left")) {
                 this.addLeftColumn();
             }
+
+            // this.getCanvas();
         });
         document.body.append(this.app.canvas);
     }
@@ -321,19 +341,145 @@ class Render {
     private renderBlock(
         color: string,
         pos: RenderBlockPos,
-        container: Container<ContainerChild>
+        container: Container<ContainerChild>,
+        chunkCenter: { x: number; y: number }
     ) {
-        const sprite = new Sprite(this.getTexture(color));
+        const sprite = new ExtendedSprite(
+            this.getTexture(color),
+            pos,
+            chunkCenter
+        );
         const { x, y } = getRenderFactor(pos);
         sprite.x = startPosition.x + x;
         sprite.y = startPosition.y + y;
         sprite.zIndex = (pos.x + pos.z) * 100000 - pos.y * 10;
+        sprite.interactive = true;
         container.addChild(sprite);
+        sprite.on("pointerdown", (event) => {
+            // // 0 表示左键
+            // if (event.data.button === 0) {
+            //     const x: number =
+            //         sprite.containerCenter.x -
+            //         Math.ceil(renderChunkSize / 2) +
+            //         pos.x;
+            //     const y: number =
+            //         sprite.containerCenter.y -
+            //         Math.ceil(renderChunkSize / 2) +
+            //         pos.z;
+            //     const z: number = renderChunkHeight - pos.y - 1;
+            //     sprite.parent.removeChild(sprite);
+            //     dimension.setBlock({ x, y, z }, new EmptyBlock("air"));
+            // }
+            // event.preventDefault();
+
+            if (event.button === 0) {
+                const x: number =
+                    sprite.containerCenter.x -
+                    Math.ceil(renderChunkSize / 2) +
+                    pos.x;
+                const y: number =
+                    sprite.containerCenter.y -
+                    Math.ceil(renderChunkSize / 2) +
+                    pos.z;
+                const z: number = renderChunkHeight - pos.y - 1;
+                const absolutePos: { x: number; y: number; z: number } = {
+                    x,
+                    y,
+                    z
+                };
+                const globalPos: { x: number; y: number } = sprite.toGlobal(
+                    new Point(sprite.x, sprite.y)
+                );
+                const mousePos: { x: number; y: number } = event.global;
+                console.log("globalPos:", globalPos);
+                const dx: number = mousePos.x - globalPos.x;
+                const dy: number = mousePos.y - globalPos.y;
+                if (dx > blockSize / 2) {
+                    this.renderBlock(
+                        "#00ff00",
+                        { x: pos.x + 1, y: pos.y, z: pos.z },
+                        container,
+                        chunkCenter
+                    );
+                    dimension.setBlock(
+                        {
+                            x: absolutePos.x + 1,
+                            y: absolutePos.y,
+                            z: absolutePos.z
+                        },
+                        new Block("grass")
+                    );
+                } else if (
+                    dy <
+                    (-blockSize / 2) * Math.sin((5 / 12) * Math.PI)
+                ) {
+                    if (absolutePos.z + 1 < renderChunkHeight) {
+                        this.renderBlock(
+                            "#00ff00",
+                            { x: pos.x, y: pos.y - 1, z: pos.z },
+                            container,
+                            chunkCenter
+                        );
+                        dimension.setBlock(
+                            {
+                                x: absolutePos.x,
+                                y: absolutePos.y,
+                                z: absolutePos.z + 1
+                            },
+                            new Block("grass")
+                        );
+                    }
+                } else {
+                    this.renderBlock(
+                        "#00ff00",
+                        { x: pos.x, y: pos.y, z: pos.z + 1 },
+                        container,
+                        chunkCenter
+                    );
+                    dimension.setBlock(
+                        {
+                            x: absolutePos.x,
+                            y: absolutePos.y + 1,
+                            z: absolutePos.z
+                        },
+                        new Block("grass")
+                    );
+                }
+                // if (mousePos.x - globalPos.x > blockSize ) {
+                //     dimension.setBlock({ x:absolutePos.x+1,y:absolutePos.y,z:absolutePos.z }, new Block("grass"));
+                //     this.renderBlock("#000000", { x: pos.x+1, y: pos.y, z: pos.z }, container, chunkCenter);
+                // }
+
+                // else if (blockSize && mousePos.y - globalPos.y <= blockSize * Math.sin((5 / 12) * Math.PI ) ){
+                //     if (absolutePos.z+1 < renderChunkHeight){
+                //         dimension.setBlock({ x:absolutePos.x,y:absolutePos.y,z:absolutePos.z+1 }, new Block("grass"));
+                //         this.renderBlock("#000000", { x: pos.x, y: pos.y-1, z: pos.z }, container, chunkCenter);
+                //     }
+
+                // }
+
+                // else{
+                //     dimension.setBlock({ x:absolutePos.x,y:absolutePos.y+1,z:absolutePos.z }, new Block("grass"));
+                //     this.renderBlock("#000000", { x: pos.x, y: pos.y, z: pos.z+1 }, container, chunkCenter);
+                // }
+            }
+        });
+    }
+
+    addNewBlockType(aiBlockData: { [key: string]: { blockcolor: string } }) {
+        for (const key in aiBlockData) {
+            if (!Object.hasOwn(aiBlockData, key)) continue;
+
+            const blockData = aiBlockData[key];
+            const color = blockData.blockcolor;
+            colorMapper[key] = color;
+        }
     }
 
     private renderRChunk(
         blockArray: Block[][][],
-        stagePos: { x: number; y: number }
+        stagePos: { x: number; y: number },
+        chunkcenter: { x: number; y: number }
     ) {
         const container = new Container();
         traverse3DArray(blockArray, (value: Block, pos: BlockPos) => {
@@ -433,7 +579,7 @@ class Render {
                     ? colorMapper[value.type]
                     : "#000000";
             pos = this.convertBlockPosToRenderBlockPos(pos);
-            this.renderBlock(color, pos, container);
+            this.renderBlock(color, pos, container, chunkcenter);
         });
 
         container.x = stagePos.x;
@@ -476,6 +622,7 @@ class Render {
 
                 // const array = dimension.getBlockArray(
                 //     {
+
                 //         x: x * 8,
                 //         y: y * 8,
                 //         z: 0
@@ -486,14 +633,21 @@ class Render {
                 //         z: 15
                 //     }
                 // );
-                const container = this.renderRChunk(array, {
-                    x:
-                        getRenderFactor({ x, y: 0, z: y }).x *
-                        (renderChunkSize + 1),
-                    y:
-                        getRenderFactor({ x, y: 0, z: y }).y *
-                        (renderChunkSize + 1)
-                });
+                const container = this.renderRChunk(
+                    array,
+                    {
+                        x:
+                            getRenderFactor({ x, y: 0, z: y }).x *
+                            (renderChunkSize + 1),
+                        y:
+                            getRenderFactor({ x, y: 0, z: y }).y *
+                            (renderChunkSize + 1)
+                    },
+                    {
+                        x: (x + center.x - offsetX) * 8,
+                        y: (y + center.y - offsetY) * 8
+                    }
+                );
                 this.app.stage.addChild(container);
                 row.push(container);
             }
@@ -501,12 +655,19 @@ class Render {
             this.rengerGrid.push(row);
         }
 
-        console.table(
-            this.rengerGrid.map((row) =>
-                row.map((chunk) => [chunk.x, chunk.y])
-            )
-        );
+        // console.table(
+        //     this.rengerGrid.map((row) =>
+        //         row.map((chunk) => [chunk.x, chunk.y])
+        //     )
+        // );
     }
+
+    // getCanvas(){
+    //     const canvas:ICanvas = this.app.renderer.extract.canvas(this.app.stage);
+    //     const dataURL:string = canvas.toDataURL();
+    //     console.log(dataURL)
+    //     // console.log('%c ', `font-size: 1px; padding: ${canvas.height / 2}px ${canvas.width / 2}px; background: url(${dataURL}) no-repeat; background-size: contain;`);
+    // }
 
     private addTopRow() {
         const row: Container[] = [];
@@ -537,20 +698,27 @@ class Render {
                 y: (this.currentYOffset - offsetY) * 8
             });
 
-            console.log("currentXOffset:", this.currentXOffset);
-            const container = this.renderRChunk(array, {
-                x:
-                    getRenderFactor({
-                        x: x + this.currentXOffset,
-                        // x: x - 1,
-                        y: 0,
-                        z: this.currentYOffset
-                    }).x *
-                    (renderChunkSize + 1),
-                y: yStart
-                // x: x * rendeerChunkWidth,
-                // y: yMaxChunkLength * rendeerChunkHeight
-            });
+            // console.log("currentXOffset:", this.currentXOffset);
+            const container = this.renderRChunk(
+                array,
+                {
+                    x:
+                        getRenderFactor({
+                            x: x + this.currentXOffset,
+                            // x: x - 1,
+                            y: 0,
+                            z: this.currentYOffset
+                        }).x *
+                        (renderChunkSize + 1),
+                    y: yStart
+                    // x: x * rendeerChunkWidth,
+                    // y: yMaxChunkLength * rendeerChunkHeight
+                },
+                {
+                    x: (x + this.currentXOffset - offsetX) * 8,
+                    y: (this.currentYOffset - offsetY) * 8
+                }
+            );
             row.push(container);
         }
 
@@ -560,11 +728,11 @@ class Render {
             this.app.stage.addChildAt(container, 0);
         }
 
-        console.table(
-            this.rengerGrid.map((row) =>
-                row.map((chunk) => [chunk.x, chunk.y])
-            )
-        );
+        // console.table(
+        //     this.rengerGrid.map((row) =>
+        //         row.map((chunk) => [chunk.x, chunk.y])
+        //     )
+        // );
     }
 
     private addRightColumn() {
@@ -593,16 +761,23 @@ class Render {
                 y: (y + this.currentYOffset - offsetY) * 8
             });
 
-            const container = this.renderRChunk(array, {
-                x: xStart,
-                y:
-                    getRenderFactor({
-                        x: xMaxChunkLength,
-                        y: 0,
-                        z: y + this.currentYOffset
-                    }).y *
-                    (renderChunkSize + 1)
-            });
+            const container = this.renderRChunk(
+                array,
+                {
+                    x: xStart,
+                    y:
+                        getRenderFactor({
+                            x: xMaxChunkLength,
+                            y: 0,
+                            z: y + this.currentYOffset
+                        }).y *
+                        (renderChunkSize + 1)
+                },
+                {
+                    x: (xMaxChunkLength - 1 + this.currentXOffset) * 8,
+                    y: (y + this.currentYOffset - offsetY) * 8
+                }
+            );
 
             this.rengerGrid[y].push(container);
             this.app.stage.addChildAt(
@@ -647,18 +822,25 @@ class Render {
                 x: (x + this.currentXOffset - offsetX) * 8,
                 y: (this.currentYOffset - offsetY + yMaxChunkLength) * 8
             });
-            const container = this.renderRChunk(array, {
-                x:
-                    getRenderFactor({
-                        x: x + this.currentXOffset,
-                        y: 0,
-                        z: yMaxChunkLength - 1 + this.currentYOffset
-                    }).x *
-                    (renderChunkSize + 1),
-                y: yStart
-                // x: x * rendeerChunkWidth,
-                // y: yMaxChunkLength * rendeerChunkHeight
-            });
+            const container = this.renderRChunk(
+                array,
+                {
+                    x:
+                        getRenderFactor({
+                            x: x + this.currentXOffset,
+                            y: 0,
+                            z: yMaxChunkLength - 1 + this.currentYOffset
+                        }).x *
+                        (renderChunkSize + 1),
+                    y: yStart
+                    // x: x * rendeerChunkWidth,
+                    // y: yMaxChunkLength * rendeerChunkHeight
+                },
+                {
+                    x: (x + this.currentXOffset - offsetX) * 8,
+                    y: (this.currentYOffset - offsetY + yMaxChunkLength) * 8
+                }
+            );
             row.push(container);
         }
 
@@ -699,28 +881,35 @@ class Render {
                 x: (0 + this.currentXOffset - offsetX) * 8,
                 y: (y + this.currentYOffset - offsetY) * 8
             });
-            const container = this.renderRChunk(array, {
-                x: xStart,
-                y:
-                    getRenderFactor({
-                        x: xMaxChunkLength,
-                        // y: this.currentYOffset,
-                        y: 0,
-                        // z: this.currentXOffset + y
-                        z: y + this.currentYOffset
-                    }).y *
-                    (renderChunkSize + 1)
-            });
+            const container = this.renderRChunk(
+                array,
+                {
+                    x: xStart,
+                    y:
+                        getRenderFactor({
+                            x: xMaxChunkLength,
+                            // y: this.currentYOffset,
+                            y: 0,
+                            // z: this.currentXOffset + y
+                            z: y + this.currentYOffset
+                        }).y *
+                        (renderChunkSize + 1)
+                },
+                {
+                    x: (0 + this.currentXOffset - offsetX) * 8,
+                    y: (y + this.currentYOffset - offsetY) * 8
+                }
+            );
 
             this.rengerGrid[y].unshift(container);
             this.app.stage.addChildAt(container, y * xMaxChunkLength);
         }
 
-        console.table(
-            this.rengerGrid.map((row) =>
-                row.map((chunk) => [chunk.x, chunk.y])
-            )
-        );
+        // console.table(
+        //     this.rengerGrid.map((row) =>
+        //         row.map((chunk) => [chunk.x, chunk.y])
+        //     )
+        // );
     }
 
     // 是否将要超出屏幕
@@ -770,7 +959,7 @@ class Render {
             result.push("bottom");
         // if (bottomContainer.y < window.innerHeight + renderChunkPixiHeight)
         //     result.push("bottom");
-        console.log(result);
+        // console.log(result);
         return result;
     }
 }
@@ -827,8 +1016,17 @@ const chunk = dimension.getChunkFromChunkPos({
 
 const render = await Render.getInstance();
 render.initStage();
-// @ts-expect-error No error!!!!!!!!!
-window.render = render;
+
+// 在全局范围内禁用右键菜单
+document.addEventListener(
+    "contextmenu",
+    (event) => {
+        event.preventDefault();
+    },
+    true
+); // 使用 true 参数在捕获阶段监听事件，以提高处理优先级
+
+export default render;
 // render.addLeftColumn();
 // render.addTopRow();
 // render.addLeftColumn();

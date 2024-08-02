@@ -1,0 +1,63 @@
+$google-blue: #4285f4;
+$google-red: #ea4335;
+$google-yellow: #fbbc05;
+$google-green: #34a853;
+div {
+    margin: auto;
+    position: relative;
+    top: 200px;
+    width: 100%;
+    display: inline;
+    z-index: 1000000000000;
+}
+
+#form1 {
+    width: 400px;
+    padding: 10px;
+    font-size: 18px;
+    margin-left: 35%;
+    outline: none;
+    background: rgb(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 2px solid rgba(227, 221, 221, 0.2);
+    color: black;
+    transition: all 0.5s;
+
+    &:hover {
+        border: 2px solid rgba($google-blue, 0.5);
+    }
+
+    &:focus {
+        border: 2px solid rgba($google-red, 0.8);
+        background: white;
+    }
+}
+
+#button {
+    width: 80px;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: bold;
+    outline: none;
+    background: linear-gradient(to left top, #000, #4e2d69) fixed;
+    border-radius: 10px;
+    border: 5px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.5s;
+    background: $google-yellow;
+
+    &:hover {
+        border: 5px solid rgba($google-blue, 0.5);
+        background: $google-green;
+    }
+
+    &:focus {
+        background: $google-red;
+        border: 5px solid rgba(255, 255, 255, 0.5);
+    }
+
+    &:active {
+        background: darken($google-red, 10%);
+    }
+}
