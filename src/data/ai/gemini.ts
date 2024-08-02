@@ -1,4 +1,3 @@
-// @ts-expect-error Fxxk you Google
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { flattenJson } from "./util";
 // Access your API key (see "Set up your API key" above)
@@ -51,10 +50,9 @@ async function blockMaker(request: string) {
         `;
 
     // Generate content using the model
-    const para = {
-        response_mime_type: "application/json"
-    };
-    const result = await model.generateContent(prompt, para);
+    const result = await model.generateContent(prompt, {
+        // responseMimeType: "application/json"
+    });
     // Get the response text
     const response = await result.response;
     const text1 = response.text().slice(7);
