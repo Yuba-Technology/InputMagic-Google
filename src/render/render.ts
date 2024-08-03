@@ -8,7 +8,7 @@ import {
     Ticker,
     Point
 } from "pixi.js";
-import { isPointInside,Points} from "./utility";
+import { isPointInside, Points } from "./utility";
 import { BlockPos, Block, EmptyBlock } from "@/data/map/block";
 import { Chunk } from "@/data/map/chunk";
 import { Dimension } from "@/data/map/dimension";
@@ -16,7 +16,6 @@ import { Generator3D } from "@/data/map/generator/3d";
 import { generate2DArray, traverse3DArray } from "@/data/map/utils";
 import { eventBus } from "@/data/event-bus";
 import { PlayerMoveEventData } from "@/control/player";
-
 
 /**
  * !IMPORTANT: The coordinate system used in rendering
@@ -96,7 +95,6 @@ type CenterPos = {
 
 // this is a datatype for the shape ,with its points for different plane
 
-
 class ExtendedSprite extends Sprite {
     pos: RenderBlockPos;
     containerCenter: { x: number; y: number };
@@ -130,7 +128,7 @@ const keyState = {
 };
 
 window.addEventListener("keydown", (event) => {
-    const key = Number.parseInt(event.key,10);
+    const key = Number.parseInt(event.key, 10);
     if (key >= 1 && key <= 6) {
         keyState.lastKey = key;
         keyState.isActive = true;
@@ -138,7 +136,7 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
-    const key = Number.parseInt(event.key,10);
+    const key = Number.parseInt(event.key, 10);
     if (key >= 1 && key <= 6) {
         keyState.lastKey = null;
         keyState.isActive = false;
@@ -152,30 +150,71 @@ window.addEventListener("keyup", (event) => {
 //     return { x, y };
 // }
 
-
-function getShapes(pos:{x:number,y:number},size:{x:number,y:number}){
+function getShapes(
+    pos: { x: number; y: number },
+    size: { x: number; y: number }
+) {
     // pixijs make the pivot of Sprite at the left top, make it tricky
-    const orignPoint= { x:pos.x,y:pos.y+size.y };
+    const orignPoint = { x: pos.x, y: pos.y + size.y };
     const shapes = {
         // magics, these are coordinates of points in this shape
         top: [
-            { x:orignPoint.x,y:orignPoint.y-(blockSize * 2) / 3 },
-            { x:orignPoint.x+blockSize,y:orignPoint.y-(blockSize * 2) / 3 },
-            { x:orignPoint.x+blockSize+Math.cos((5 / 12) * Math.PI) * blockSize,y:orignPoint.y-(blockSize * 2) / 3-Math.sin((5 / 12) * Math.PI) * blockSize },
-            { x:orignPoint.x+Math.cos((5 / 12) * Math.PI) * blockSize,y:orignPoint.y-(blockSize * 2) / 3-Math.sin((5 / 12) * Math.PI) * blockSize }
+            { x: orignPoint.x, y: orignPoint.y - (blockSize * 2) / 3 },
+            {
+                x: orignPoint.x + blockSize,
+                y: orignPoint.y - (blockSize * 2) / 3
+            },
+            {
+                x:
+                    orignPoint.x +
+                    blockSize +
+                    Math.cos((5 / 12) * Math.PI) * blockSize,
+                y:
+                    orignPoint.y -
+                    (blockSize * 2) / 3 -
+                    Math.sin((5 / 12) * Math.PI) * blockSize
+            },
+            {
+                x: orignPoint.x + Math.cos((5 / 12) * Math.PI) * blockSize,
+                y:
+                    orignPoint.y -
+                    (blockSize * 2) / 3 -
+                    Math.sin((5 / 12) * Math.PI) * blockSize
+            }
         ],
         front: [
-            { x:orignPoint.x , y:orignPoint.y },
-            { x:orignPoint.x+blockSize,y:orignPoint.y },
-            { x:orignPoint.x+blockSize,y:orignPoint.y-(blockSize * 2) / 3 },
-            { x:orignPoint.x,y:orignPoint.y-(blockSize * 2) / 3 }
+            { x: orignPoint.x, y: orignPoint.y },
+            { x: orignPoint.x + blockSize, y: orignPoint.y },
+            {
+                x: orignPoint.x + blockSize,
+                y: orignPoint.y - (blockSize * 2) / 3
+            },
+            { x: orignPoint.x, y: orignPoint.y - (blockSize * 2) / 3 }
         ],
         right: [
-            { x:orignPoint.x+blockSize,y:orignPoint.y },
-            { x:orignPoint.x+blockSize+Math.cos((5 / 12) * Math.PI) * blockSize,y:orignPoint.y-Math.sin((5 / 12) * Math.PI) * blockSize },
-            { x:orignPoint.x+blockSize+Math.cos((5 / 12) * Math.PI) * blockSize,y:orignPoint.y-Math.sin((5 / 12) * Math.PI) * blockSize - (blockSize * 2) / 3 },
-            { x:orignPoint.x+blockSize,y:orignPoint.y-(blockSize * 2) / 3 }
-        ]  
+            { x: orignPoint.x + blockSize, y: orignPoint.y },
+            {
+                x:
+                    orignPoint.x +
+                    blockSize +
+                    Math.cos((5 / 12) * Math.PI) * blockSize,
+                y: orignPoint.y - Math.sin((5 / 12) * Math.PI) * blockSize
+            },
+            {
+                x:
+                    orignPoint.x +
+                    blockSize +
+                    Math.cos((5 / 12) * Math.PI) * blockSize,
+                y:
+                    orignPoint.y -
+                    Math.sin((5 / 12) * Math.PI) * blockSize -
+                    (blockSize * 2) / 3
+            },
+            {
+                x: orignPoint.x + blockSize,
+                y: orignPoint.y - (blockSize * 2) / 3
+            }
+        ]
     };
 
     return shapes;
@@ -329,8 +368,7 @@ class Render {
 
     private async init() {
         await this.app.init({ background: "#1099bb", resizeTo: window });
-        this.app.canvas.addEventListener("mousemove", (e) =>
-        {
+        this.app.canvas.addEventListener("mousemove", (e) => {
             this.xMouse = e.clientX;
             this.yMouse = e.clientY;
         });
@@ -368,10 +406,10 @@ class Render {
 
         return Render.instance;
     }
-    
+
     // private onMouseMove(event: InteractionEvent) {
     //     this.mousePos.copyFrom(event.data.global);
-    
+
     //     console.log("Mouse position:", this.mousePos);
     // }
 
@@ -445,7 +483,6 @@ class Render {
             //     sprite.parent.removeChild(sprite);
             //     dimension.setBlock({ x, y, z }, new EmptyBlock("air"));
             // }
-            
 
             if (event.button === 0) {
                 event.preventDefault();
@@ -468,12 +505,15 @@ class Render {
                 // );
                 // const mousePos: { x: number; y: number } = { x:this.xMouse-80 , y:this.yMouse+30 };
                 // const shape = getShapes(globalPos,{ x:sprite.width,y:sprite.height });
-                if (keyState.isActive){
-                    if (keyState.lastKey===1&&dimension.getBlock({
-                        x: absolutePos.x,
-                        y: (absolutePos.y+1),
-                        z: absolutePos.z 
-                    })instanceof EmptyBlock){
+                if (keyState.isActive) {
+                    if (
+                        keyState.lastKey === 1 &&
+                        dimension.getBlock({
+                            x: absolutePos.x,
+                            y: absolutePos.y + 1,
+                            z: absolutePos.z
+                        }) instanceof EmptyBlock
+                    ) {
                         this.renderBlock(
                             "#00ff00",
                             { x: pos.x, y: pos.y, z: pos.z + 1 },
@@ -488,12 +528,14 @@ class Render {
                             },
                             new Block("grass")
                         );
-                    }
-                    else if (keyState.lastKey===2&&dimension.getBlock({
-                        x: absolutePos.x,
-                        y: (absolutePos.y-1),
-                        z: absolutePos.z 
-                    })instanceof EmptyBlock){
+                    } else if (
+                        keyState.lastKey === 2 &&
+                        dimension.getBlock({
+                            x: absolutePos.x,
+                            y: absolutePos.y - 1,
+                            z: absolutePos.z
+                        }) instanceof EmptyBlock
+                    ) {
                         this.renderBlock(
                             "#00ff00",
                             { x: pos.x, y: pos.y, z: pos.z - 1 },
@@ -508,12 +550,14 @@ class Render {
                             },
                             new Block("grass")
                         );
-                    }
-                    else if (keyState.lastKey===3&&dimension.getBlock({
-                        x: absolutePos.x - 1,
-                        y: absolutePos.y,
-                        z: absolutePos.z
-                    }) instanceof EmptyBlock){
+                    } else if (
+                        keyState.lastKey === 3 &&
+                        dimension.getBlock({
+                            x: absolutePos.x - 1,
+                            y: absolutePos.y,
+                            z: absolutePos.z
+                        }) instanceof EmptyBlock
+                    ) {
                         this.renderBlock(
                             "#00ff00",
                             { x: pos.x - 1, y: pos.y, z: pos.z },
@@ -527,13 +571,15 @@ class Render {
                                 z: absolutePos.z
                             },
                             new Block("grass")
-                        );       
-                    }
-                    else if (keyState.lastKey===4&&dimension.getBlock({
-                        x: absolutePos.x + 1,
-                        y: absolutePos.y,
-                        z: absolutePos.z
-                    }) instanceof EmptyBlock){
+                        );
+                    } else if (
+                        keyState.lastKey === 4 &&
+                        dimension.getBlock({
+                            x: absolutePos.x + 1,
+                            y: absolutePos.y,
+                            z: absolutePos.z
+                        }) instanceof EmptyBlock
+                    ) {
                         this.renderBlock(
                             "#00ff00",
                             { x: pos.x + 1, y: pos.y, z: pos.z },
@@ -548,18 +594,18 @@ class Render {
                             },
                             new Block("grass")
                         );
-                        
-                    }
-                    else if (keyState.lastKey===5&&(dimension.getBlock(
-                        {
+                    } else if (
+                        keyState.lastKey === 5 &&
+                        dimension.getBlock({
                             x: absolutePos.x,
                             y: absolutePos.y,
-                            z: absolutePos.z+1
-                        }
-                    ) instanceof EmptyBlock ) && (absolutePos.z + 1 < renderChunkHeight)){
+                            z: absolutePos.z + 1
+                        }) instanceof EmptyBlock &&
+                        absolutePos.z + 1 < renderChunkHeight
+                    ) {
                         this.renderBlock(
                             "#00ff00",
-                            { x: pos.x, y: pos.y-1, z: pos.z },
+                            { x: pos.x, y: pos.y - 1, z: pos.z },
                             container,
                             chunkCenter
                         );
@@ -567,21 +613,22 @@ class Render {
                             {
                                 x: absolutePos.x,
                                 y: absolutePos.y,
-                                z: absolutePos.z+1
+                                z: absolutePos.z + 1
                             },
                             new Block("grass")
                         );
-                    }
-                    else if (keyState.lastKey===6&&(dimension.getBlock(
-                        {
+                    } else if (
+                        keyState.lastKey === 6 &&
+                        dimension.getBlock({
                             x: absolutePos.x,
                             y: absolutePos.y,
-                            z: absolutePos.z-1
-                        }
-                    ) instanceof EmptyBlock ) && (absolutePos.z - 1 >0)){
+                            z: absolutePos.z - 1
+                        }) instanceof EmptyBlock &&
+                        absolutePos.z - 1 > 0
+                    ) {
                         this.renderBlock(
                             "#00ff00",
-                            { x: pos.x, y: pos.y+1, z: pos.z },
+                            { x: pos.x, y: pos.y + 1, z: pos.z },
                             container,
                             chunkCenter
                         );
@@ -589,25 +636,23 @@ class Render {
                             {
                                 x: absolutePos.x,
                                 y: absolutePos.y,
-                                z: absolutePos.z-1
+                                z: absolutePos.z - 1
                             },
                             new Block("grass")
                         );
                     }
-                }
-                else{
+                } else {
                     const x: number =
-                    sprite.containerCenter.x -
-                    Math.ceil(renderChunkSize / 2) +
-                    pos.x;
+                        sprite.containerCenter.x -
+                        Math.ceil(renderChunkSize / 2) +
+                        pos.x;
                     const y: number =
-                    sprite.containerCenter.y -
-                    Math.ceil(renderChunkSize / 2) +
-                    pos.z;
+                        sprite.containerCenter.y -
+                        Math.ceil(renderChunkSize / 2) +
+                        pos.z;
                     const z: number = renderChunkHeight - pos.y - 1;
                     sprite.parent.removeChild(sprite);
                     dimension.setBlock({ x, y, z }, new EmptyBlock("air"));
-
                 }
                 // // console.log(shape);
                 // // console.log(mousePos);
@@ -639,7 +684,7 @@ class Render {
                 //     isPointInside(shape.front,mousePos)&&dimension.getBlock({
                 //         x: absolutePos.x,
                 //         y: absolutePos.y+1,
-                //         z: absolutePos.z 
+                //         z: absolutePos.z
                 //     })instanceof EmptyBlock
                 // ) {
                 //     this.renderBlock(
@@ -675,7 +720,7 @@ class Render {
                 //     console.log("front");
                 //     console.log(shape);
                 //     console.log(mousePos);
-                // } 
+                // }
 
                 // else if(
                 //     isPointInside(shape.top,mousePos)&&(dimension.getBlock(

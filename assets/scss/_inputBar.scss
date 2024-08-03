@@ -1,7 +1,7 @@
-$google-blue: #4285f4;
-$google-red: #ea4335;
-$google-yellow: #fbbc05;
-$google-green: #34a853;
+$google-blue: #4285f4 !default;;
+$google-red: #ea4335 !default;;
+$google-yellow: #fbbc05 !default;;
+$google-green: #34a853 !default;;
 
 body {
     margin: 0;
@@ -64,6 +64,6 @@ div {
     }
 
     &:active {
-        background: darken($google-red, 10%);
+        background: color.adjust($color, $lightness: -$amount)
     }
 }
