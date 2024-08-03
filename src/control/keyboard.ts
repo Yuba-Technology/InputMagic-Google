@@ -109,10 +109,13 @@ class KeyboardManager {
      * @private
      */
     private handleKeyDown(event: KeyboardEvent) {
-        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        if (
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement
+        ) {
             return;
         }
-        
+
         event.preventDefault();
 
         // Prevent duplicate publishing of the same keychange event.
@@ -133,7 +136,10 @@ class KeyboardManager {
      * @private
      */
     private handleKeyUp(event: KeyboardEvent) {
-        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        if (
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement
+        ) {
             return;
         }
 
