@@ -1,7 +1,8 @@
-$google-blue: #4285f4 !default;;
-$google-red: #ea4335 !default;;
-$google-yellow: #fbbc05 !default;;
-$google-green: #34a853 !default;;
+@use "sass:color";
+
+$google-red: #ea4335 !default;
+$google-yellow: #fbbc05 !default;
+$google-green: #34a853 !default;
 
 body {
     margin: 0;
@@ -63,7 +64,8 @@ div {
         border: 5px solid rgb(255 255 255 / 50%);
     }
 
-    &:active {
-        background: color.adjust($color, $lightness: -$amount)
-    }
+    // TODO: Fix build error with color.adjust later
+    // &:active {
+    //     background: color.adjust($color, $lightness: -$amount);
+    // }
 }
