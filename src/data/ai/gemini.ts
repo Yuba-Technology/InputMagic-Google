@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { flattenJson } from "./util";
+import render from "@/render/render";
 // Access your API key (see "Set up your API key" above)
 
 // Fetch your API_KEY
-const API_KEY: string = "";
+const API_KEY: string = "AIzaSyBudYAygjJOkBxoYHVaZiOOp3N0hHMFvP8";
 // Access your API key (see "Set up your API key" above)
 const genAI: GoogleGenerativeAI = new GoogleGenerativeAI(API_KEY);
 // Initialize the Gemini model
@@ -91,4 +92,7 @@ async function blockMaker(request: string) {
 //     return response;
 // }
 // const response: string = await blockMaker("coool kitty");
+const result:{ [key: string]: { blockcolor: string , blockdes:string } } = await blockMaker("google logo");
+console.log(result);
+render.addNewBlockType(result);
 export { blockMaker };
