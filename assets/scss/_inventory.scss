@@ -1,0 +1,32 @@
+#inventory {
+    width: 500px;
+    height: 50px;
+    padding: 0px;
+    position: absolute;
+    display: inline-flex;
+    transform: translateX(-50%);
+    bottom: 35px;
+    left: 50%;
+    // background-color: #e9e9ed;
+    background-color: #000000cc;
+    border-radius: 5px;
+    list-style: none;
+
+    li {
+        aspect-ratio: 1/1;
+        border-radius: 5px;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        font-size: larger;
+
+        &:hover {
+            background-color: #6c6c6c;
+            cursor: pointer;
+        }
+
+        &.active {
+            background-color: #bdbdc2;
+        }
+    }
+}

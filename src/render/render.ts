@@ -9,6 +9,7 @@ import {
     Point
 } from "pixi.js";
 import { isPointInside, Points } from "./utility";
+import { inventory } from "./inventory";
 import { BlockPos, Block, EmptyBlock } from "@/data/map/block";
 import { Chunk } from "@/data/map/chunk";
 import { Dimension } from "@/data/map/dimension";
@@ -286,6 +287,21 @@ const colorMapper: { [key: string]: string } = {
     snow: "#ffffff"
 };
 
+for (const key in colorMapper) {
+    if (!Object.hasOwn(colorMapper, key)) continue;
+    inventory.addItem({
+        type: key,
+        color: colorMapper[key]
+    });
+}
+
+let selectedBlockType = "grass";
+
+eventBus.on("inventory:select", (data) => {
+    const { type } = data as { type: string; color: string };
+    selectedBlockType = type;
+});
+
 // const colors = [0xcc2900, 0x990000, 0xff3300];
 
 const colorVariants = (color: string): string[] => {
@@ -558,175 +574,209 @@ class Render {
                 //     z: absolutePos.z
                 // }) instanceof EmptyBlock
                 if (keyState.isActive) {
-                    if (keyState.lastKey === 1) {
-                        if (pos.z + 1 < chunkSize + 1) {
-                            this.renderBlock(
-                                "#00ff00",
-                                { x: pos.x, y: pos.y, z: pos.z + 1 },
-                                container,
-                                chunkCenter
-                            );
-                        } else {
-                            this.renderBlock(
-                                "#00ff00",
+                    switch (keyState.lastKey) {
+                        case 1: {
+                            if (pos.z + 1 < chunkSize + 1) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    { x: pos.x, y: pos.y, z: pos.z + 1 },
+                                    container,
+                                    chunkCenter
+                                );
+                            } else {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    {
+                                        x: pos.x,
+                                        y: pos.y,
+                                        z: (pos.z + 1) % (chunkSize + 1)
+                                    },
+                                    this.rengerGrid[containerIndex.x + 1][
+                                        containerIndex.y
+                                    ],
+                                    chunkCenter
+                                );
+                            }
+
+                            dimension.setBlock(
                                 {
-                                    x: pos.x,
-                                    y: pos.y,
-                                    z: (pos.z + 1) % (chunkSize + 1)
+                                    x: absolutePos.x,
+                                    y: absolutePos.y + 1,
+                                    z: absolutePos.z
                                 },
-                                this.rengerGrid[containerIndex.x + 1][
-                                    containerIndex.y
-                                ],
-                                chunkCenter
+                                new Block(selectedBlockType)
                             );
+
+                            break;
                         }
 
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x,
-                                y: absolutePos.y + 1,
-                                z: absolutePos.z
-                            },
-                            new Block("grass")
-                        );
-                    } else if (keyState.lastKey === 2) {
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x,
-                                y: absolutePos.y - 1,
-                                z: absolutePos.z
-                            },
-                            new Block("grass")
-                        );
-                        if (pos.z - 1 >= 0) {
-                            this.renderBlock(
-                                "#00ff00",
-                                { x: pos.x, y: pos.y, z: pos.z - 1 },
-                                container,
-                                chunkCenter
-                            );
-                        } else {
-                            this.renderBlock(
-                                "#00ff00",
+                        case 2: {
+                            dimension.setBlock(
                                 {
-                                    x: pos.x,
-                                    y: pos.y,
-                                    z: pos.z - 1 + chunkSize + 1
+                                    x: absolutePos.x,
+                                    y: absolutePos.y - 1,
+                                    z: absolutePos.z
                                 },
-                                this.rengerGrid[containerIndex.x - 1][
-                                    containerIndex.y
-                                ],
-                                chunkCenter
+                                new Block(selectedBlockType)
                             );
-                        }
-                    } else if (keyState.lastKey === 3) {
-                        if (pos.x - 1 >= 0) {
-                            this.renderBlock(
-                                "#00ff00",
-                                { x: pos.x - 1, y: pos.y, z: pos.z },
-                                container,
-                                chunkCenter
-                            );
-                        } else {
-                            this.renderBlock(
-                                "#00ff00",
-                                {
-                                    x: pos.x - 1 + chunkSize + 1,
-                                    y: pos.y,
-                                    z: pos.z
-                                },
-                                this.rengerGrid[containerIndex.x][
-                                    containerIndex.y - 1
-                                ],
-                                chunkCenter
-                            );
+                            if (pos.z - 1 >= 0) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    { x: pos.x, y: pos.y, z: pos.z - 1 },
+                                    container,
+                                    chunkCenter
+                                );
+                            } else {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    {
+                                        x: pos.x,
+                                        y: pos.y,
+                                        z: pos.z - 1 + chunkSize + 1
+                                    },
+                                    this.rengerGrid[containerIndex.x - 1][
+                                        containerIndex.y
+                                    ],
+                                    chunkCenter
+                                );
+                            }
+
+                            break;
                         }
 
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x - 1,
-                                y: absolutePos.y,
-                                z: absolutePos.z
-                            },
-                            new Block("grass")
-                        );
-                    } else if (keyState.lastKey === 4) {
-                        if (pos.x + 1 < chunkSize + 1) {
-                            this.renderBlock(
-                                "#00ff00",
-                                { x: pos.x + 1, y: pos.y, z: pos.z },
-                                container,
-                                chunkCenter
-                            );
-                        } else {
-                            this.renderBlock(
-                                "#00ff00",
+                        case 3: {
+                            if (pos.x - 1 >= 0) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    { x: pos.x - 1, y: pos.y, z: pos.z },
+                                    container,
+                                    chunkCenter
+                                );
+                            } else {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+                                    {
+                                        x: pos.x - 1 + chunkSize + 1,
+                                        y: pos.y,
+                                        z: pos.z
+                                    },
+                                    this.rengerGrid[containerIndex.x][
+                                        containerIndex.y - 1
+                                    ],
+                                    chunkCenter
+                                );
+                            }
+
+                            dimension.setBlock(
                                 {
-                                    x: (pos.x + 1) % (chunkSize + 1),
-                                    y: pos.y,
-                                    z: pos.z
+                                    x: absolutePos.x - 1,
+                                    y: absolutePos.y,
+                                    z: absolutePos.z
                                 },
-                                this.rengerGrid[containerIndex.x][
-                                    containerIndex.y + 1
-                                ],
-                                chunkCenter
+                                new Block(selectedBlockType)
                             );
+
+                            break;
                         }
 
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x + 1,
-                                y: absolutePos.y,
-                                z: absolutePos.z
-                            },
-                            new Block("grass")
-                        );
-                    } else if (
-                        keyState.lastKey === 5 &&
-                        dimension.getBlock({
-                            x: absolutePos.x,
-                            y: absolutePos.y,
-                            z: absolutePos.z + 1
-                        }) instanceof EmptyBlock &&
-                        absolutePos.z + 1 < renderChunkHeight
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x, y: pos.y - 1, z: pos.z },
-                            container,
-                            chunkCenter
-                        );
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x,
-                                y: absolutePos.y,
-                                z: absolutePos.z + 1
-                            },
-                            new Block("grass")
-                        );
-                    } else if (
-                        keyState.lastKey === 6 &&
-                        dimension.getBlock({
-                            x: absolutePos.x,
-                            y: absolutePos.y,
-                            z: absolutePos.z - 1
-                        }) instanceof EmptyBlock &&
-                        absolutePos.z - 1 > 0
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x, y: pos.y + 1, z: pos.z },
-                            container,
-                            chunkCenter
-                        );
-                        dimension.setBlock(
-                            {
-                                x: absolutePos.x,
-                                y: absolutePos.y,
-                                z: absolutePos.z - 1
-                            },
-                            new Block("grass")
-                        );
+                        case 4: {
+                            if (pos.x + 1 < chunkSize + 1) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+
+                                    { x: pos.x + 1, y: pos.y, z: pos.z },
+                                    container,
+                                    chunkCenter
+                                );
+                            } else {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+
+                                    {
+                                        x: (pos.x + 1) % (chunkSize + 1),
+                                        y: pos.y,
+                                        z: pos.z
+                                    },
+                                    this.rengerGrid[containerIndex.x][
+                                        containerIndex.y + 1
+                                    ],
+                                    chunkCenter
+                                );
+                            }
+
+                            dimension.setBlock(
+                                {
+                                    x: absolutePos.x + 1,
+                                    y: absolutePos.y,
+                                    z: absolutePos.z
+                                },
+                                new Block(selectedBlockType)
+                            );
+
+                            break;
+                        }
+
+                        default: {
+                            if (
+                                keyState.lastKey === 5 &&
+                                dimension.getBlock({
+                                    x: absolutePos.x,
+                                    y: absolutePos.y,
+                                    z: absolutePos.z + 1
+                                }) instanceof EmptyBlock &&
+                                absolutePos.z + 1 < renderChunkHeight
+                            ) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+
+                                    { x: pos.x, y: pos.y - 1, z: pos.z },
+                                    container,
+                                    chunkCenter
+                                );
+                                dimension.setBlock(
+                                    {
+                                        x: absolutePos.x,
+                                        y: absolutePos.y,
+                                        z: absolutePos.z + 1
+                                    },
+                                    new Block(selectedBlockType)
+                                );
+                            } else if (
+                                keyState.lastKey === 6 &&
+                                dimension.getBlock({
+                                    x: absolutePos.x,
+                                    y: absolutePos.y,
+                                    z: absolutePos.z - 1
+                                }) instanceof EmptyBlock &&
+                                absolutePos.z - 1 > 0
+                            ) {
+                                this.renderBlock(
+                                    colorMapper[selectedBlockType] ||
+                                        "#00ff00",
+
+                                    { x: pos.x, y: pos.y + 1, z: pos.z },
+                                    container,
+                                    chunkCenter
+                                );
+                                dimension.setBlock(
+                                    {
+                                        x: absolutePos.x,
+                                        y: absolutePos.y,
+                                        z: absolutePos.z - 1
+                                    },
+                                    new Block(selectedBlockType)
+                                );
+                            }
+                        }
                     }
                 } else {
                     const x: number =
@@ -873,20 +923,22 @@ class Render {
         });
     }
 
-    addNewBlockType(aiBlockData: {
-        [key: string]: string;
-    }) {
+    addNewBlockType(aiBlockData: { [key: string]: string }) {
         for (const key in aiBlockData) {
             if (!Object.hasOwn(aiBlockData, key)) continue;
             // console.log(key);
             const keyMody: string = extractFirstKey(key);
             // console.log(keyMody);
-            const blockData:string = aiBlockData[key];
+            const blockData: string = aiBlockData[key];
             // console.log(blockData);
-            
+
             // console.log(typeof(blockData));
             if (!blockData.includes("#")) continue;
             colorMapper[keyMody] = blockData;
+            inventory.addItem({
+                type: keyMody,
+                color: blockData
+            });
             // keyMody : name of the block
             // blockData: 在那个if排除错误之后，是颜色，上面的if必须保留！必须保留！
         }
