@@ -16,4 +16,4 @@ async function newBlock() {
     }
 }
 
-export { newBlock };
+document.getElementById("button")!.addEventListener("click", newBlock);
