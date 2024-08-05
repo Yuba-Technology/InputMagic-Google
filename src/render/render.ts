@@ -70,6 +70,7 @@ const blockSize = 30;
 const renderChunkHeight = Chunk.HEIGHT;
 // const renderChunkSize = 1;
 const renderChunkSize = 8;
+const chunkSize = 8;
 const startPosition = { x: -150, y: -300 };
 // const startPosition = { x: 0, y: -500 };
 
@@ -95,6 +96,14 @@ type CenterPos = {
 
 // this is a datatype for the shape ,with its points for different plane
 
+class ExtendedContainer extends Container {
+    indexPos: { x: number; y: number } = { x: 0, y: 0 };
+
+    constructor(indexPos: { x: number; y: number }) {
+        super();
+        this.indexPos = indexPos;
+    }
+}
 class ExtendedSprite extends Sprite {
     pos: RenderBlockPos;
     containerCenter: { x: number; y: number };
@@ -149,6 +158,14 @@ window.addEventListener("keyup", (event) => {
 //     const y = event.clientY - rect.top;
 //     return { x, y };
 // }
+function extractFirstKey(path: string): string {
+    const dotIndex = path.indexOf(".");
+    if (dotIndex === -1) {
+        return path; // No dot found, return the entire string
+    }
+
+    return path.slice(0, dotIndex);
+}
 
 function getShapes(
     pos: { x: number; y: number },
@@ -338,7 +355,7 @@ class Render {
      * Notice that the x-axis is reversed to the screen coordinate system,
      * because it was sorted by z-index, which is reversed to the screen x-axis.
      */
-    rengerGrid: Container[][] = [];
+    rengerGrid: ExtendedContainer[][] = [];
     private currentXOffset: number = 0;
     private currentYOffset: number = 0;
     private center: CenterPos = { x: 0, y: 0 };
@@ -364,6 +381,14 @@ class Render {
                 this.tickerTaskList.push(moveFunctions[direction]);
             }
         });
+    }
+
+    reassignIndex(): void {
+        for (let i = 0; i < yMaxChunkLength; i++) {
+            for (let j = 0; j < xMaxChunkLength; j++) {
+                this.rengerGrid[i][j].indexPos = { x: i, y: j };
+            }
+        }
     }
 
     private async init() {
@@ -392,6 +417,8 @@ class Render {
             if (this.willOutOfScreen().includes("left")) {
                 this.addLeftColumn();
             }
+
+            this.reassignIndex();
 
             // this.getCanvas();
         });
@@ -454,7 +481,7 @@ class Render {
     private renderBlock(
         color: string,
         pos: RenderBlockPos,
-        container: Container<ContainerChild>,
+        container: ExtendedContainer,
         chunkCenter: { x: number; y: number }
     ) {
         const sprite = new ExtendedSprite(
@@ -485,6 +512,8 @@ class Render {
             // }
 
             if (event.button === 0) {
+                console.log(container.indexPos);
+                console.log(pos.x, pos.z);
                 event.preventDefault();
                 const x: number =
                     sprite.containerCenter.x -
@@ -500,26 +529,58 @@ class Render {
                     y,
                     z
                 };
+                const containerIndex: { x: number; y: number } =
+                    container.indexPos;
                 // const globalPos: { x: number; y: number } = sprite.toGlobal(
                 //     new Point(sprite.x, sprite.y)
                 // );
                 // const mousePos: { x: number; y: number } = { x:this.xMouse-80 , y:this.yMouse+30 };
                 // const shape = getShapes(globalPos,{ x:sprite.width,y:sprite.height });
+                // canceled boundary:
+                // &&dimension.getBlock({
+                //     x: absolutePos.x,
+                //     y: (absolutePos.y+1),
+                //     z: absolutePos.z
+                // })instanceof EmptyBlock
+                // &&dimension.getBlock({
+                //     x: absolutePos.x,
+                //     y: (absolutePos.y-1),
+                //     z: absolutePos.z
+                // })instanceof EmptyBlock
+                // &&dimension.getBlock({
+                //     x: absolutePos.x - 1,
+                //     y: absolutePos.y,
+                //     z: absolutePos.z
+                // }) instanceof EmptyBlock
+                // &&dimension.getBlock({
+                //     x: absolutePos.x + 1,
+                //     y: absolutePos.y,
+                //     z: absolutePos.z
+                // }) instanceof EmptyBlock
                 if (keyState.isActive) {
-                    if (
-                        keyState.lastKey === 1 &&
-                        dimension.getBlock({
-                            x: absolutePos.x,
-                            y: absolutePos.y + 1,
-                            z: absolutePos.z
-                        }) instanceof EmptyBlock
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x, y: pos.y, z: pos.z + 1 },
-                            container,
-                            chunkCenter
-                        );
+                    if (keyState.lastKey === 1) {
+                        if (pos.z + 1 < chunkSize + 1) {
+                            this.renderBlock(
+                                "#00ff00",
+                                { x: pos.x, y: pos.y, z: pos.z + 1 },
+                                container,
+                                chunkCenter
+                            );
+                        } else {
+                            this.renderBlock(
+                                "#00ff00",
+                                {
+                                    x: pos.x,
+                                    y: pos.y,
+                                    z: (pos.z + 1) % (chunkSize + 1)
+                                },
+                                this.rengerGrid[containerIndex.x + 1][
+                                    containerIndex.y
+                                ],
+                                chunkCenter
+                            );
+                        }
+
                         dimension.setBlock(
                             {
                                 x: absolutePos.x,
@@ -528,20 +589,7 @@ class Render {
                             },
                             new Block("grass")
                         );
-                    } else if (
-                        keyState.lastKey === 2 &&
-                        dimension.getBlock({
-                            x: absolutePos.x,
-                            y: absolutePos.y - 1,
-                            z: absolutePos.z
-                        }) instanceof EmptyBlock
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x, y: pos.y, z: pos.z - 1 },
-                            container,
-                            chunkCenter
-                        );
+                    } else if (keyState.lastKey === 2) {
                         dimension.setBlock(
                             {
                                 x: absolutePos.x,
@@ -550,20 +598,50 @@ class Render {
                             },
                             new Block("grass")
                         );
-                    } else if (
-                        keyState.lastKey === 3 &&
-                        dimension.getBlock({
-                            x: absolutePos.x - 1,
-                            y: absolutePos.y,
-                            z: absolutePos.z
-                        }) instanceof EmptyBlock
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x - 1, y: pos.y, z: pos.z },
-                            container,
-                            chunkCenter
-                        );
+                        if (pos.z - 1 >= 0) {
+                            this.renderBlock(
+                                "#00ff00",
+                                { x: pos.x, y: pos.y, z: pos.z - 1 },
+                                container,
+                                chunkCenter
+                            );
+                        } else {
+                            this.renderBlock(
+                                "#00ff00",
+                                {
+                                    x: pos.x,
+                                    y: pos.y,
+                                    z: pos.z - 1 + chunkSize + 1
+                                },
+                                this.rengerGrid[containerIndex.x - 1][
+                                    containerIndex.y
+                                ],
+                                chunkCenter
+                            );
+                        }
+                    } else if (keyState.lastKey === 3) {
+                        if (pos.x - 1 >= 0) {
+                            this.renderBlock(
+                                "#00ff00",
+                                { x: pos.x - 1, y: pos.y, z: pos.z },
+                                container,
+                                chunkCenter
+                            );
+                        } else {
+                            this.renderBlock(
+                                "#00ff00",
+                                {
+                                    x: pos.x - 1 + chunkSize + 1,
+                                    y: pos.y,
+                                    z: pos.z
+                                },
+                                this.rengerGrid[containerIndex.x][
+                                    containerIndex.y - 1
+                                ],
+                                chunkCenter
+                            );
+                        }
+
                         dimension.setBlock(
                             {
                                 x: absolutePos.x - 1,
@@ -572,20 +650,29 @@ class Render {
                             },
                             new Block("grass")
                         );
-                    } else if (
-                        keyState.lastKey === 4 &&
-                        dimension.getBlock({
-                            x: absolutePos.x + 1,
-                            y: absolutePos.y,
-                            z: absolutePos.z
-                        }) instanceof EmptyBlock
-                    ) {
-                        this.renderBlock(
-                            "#00ff00",
-                            { x: pos.x + 1, y: pos.y, z: pos.z },
-                            container,
-                            chunkCenter
-                        );
+                    } else if (keyState.lastKey === 4) {
+                        if (pos.x + 1 < chunkSize + 1) {
+                            this.renderBlock(
+                                "#00ff00",
+                                { x: pos.x + 1, y: pos.y, z: pos.z },
+                                container,
+                                chunkCenter
+                            );
+                        } else {
+                            this.renderBlock(
+                                "#00ff00",
+                                {
+                                    x: (pos.x + 1) % (chunkSize + 1),
+                                    y: pos.y,
+                                    z: pos.z
+                                },
+                                this.rengerGrid[containerIndex.x][
+                                    containerIndex.y + 1
+                                ],
+                                chunkCenter
+                            );
+                        }
+
                         dimension.setBlock(
                             {
                                 x: absolutePos.x + 1,
@@ -786,14 +873,20 @@ class Render {
         });
     }
 
-    addNewBlockType(aiBlockData: { [key: string]: { blockcolor: string } }) {
+    addNewBlockType(aiBlockData: {
+        [key: string]: { blockcolor: string; blockdes: string };
+    }) {
         for (const key in aiBlockData) {
+            const keyMody: string = extractFirstKey(key);
             if (!Object.hasOwn(aiBlockData, key)) continue;
-
+            console.log(key);
             const blockData = aiBlockData[key];
+            console.log(blockData);
             const color = blockData.blockcolor;
             colorMapper[key] = color;
         }
+
+        console.log(colorMapper);
     }
 
     private renderRChunk(
@@ -801,7 +894,7 @@ class Render {
         stagePos: { x: number; y: number },
         chunkcenter: { x: number; y: number }
     ) {
-        const container = new Container();
+        const container = new ExtendedContainer({ x: 0, y: 0 });
         traverse3DArray(blockArray, (value: Block, pos: BlockPos) => {
             if (value instanceof EmptyBlock) return;
 
@@ -933,11 +1026,11 @@ class Render {
         // const containers = generate2DArray({ x: 5, y: 1 }, (pos) => {
 
         for (let y = 0; y < yMaxChunkLength; y++) {
-            const row: Container[] = [];
+            const row: ExtendedContainer[] = [];
             for (let x = 0; x < xMaxChunkLength; x++) {
                 const array = this.getBlockArray({
-                    x: (x + center.x - offsetX) * 8,
-                    y: (y + center.y - offsetY) * 8
+                    x: (x + center.x - offsetX) * chunkSize,
+                    y: (y + center.y - offsetY) * chunkSize
                 });
 
                 // const array = dimension.getBlockArray(
@@ -964,8 +1057,8 @@ class Render {
                             (renderChunkSize + 1)
                     },
                     {
-                        x: (x + center.x - offsetX) * 8,
-                        y: (y + center.y - offsetY) * 8
+                        x: (x + center.x - offsetX) * chunkSize,
+                        y: (y + center.y - offsetY) * chunkSize
                     }
                 );
                 this.app.stage.addChild(container);
@@ -990,7 +1083,7 @@ class Render {
     // }
 
     private addTopRow() {
-        const row: Container[] = [];
+        const row: ExtendedContainer[] = [];
         // eslint-disable-next-line unicorn/no-array-for-each
         this.rengerGrid.pop()?.forEach((container) => {
             container.destroy();
@@ -1014,8 +1107,8 @@ class Render {
             //     }
             // );
             const array = this.getBlockArray({
-                x: (x + this.currentXOffset - offsetX) * 8,
-                y: (this.currentYOffset - offsetY) * 8
+                x: (x + this.currentXOffset - offsetX) * chunkSize,
+                y: (this.currentYOffset - offsetY) * chunkSize
             });
 
             // console.log("currentXOffset:", this.currentXOffset);
@@ -1035,8 +1128,8 @@ class Render {
                     // y: yMaxChunkLength * rendeerChunkHeight
                 },
                 {
-                    x: (x + this.currentXOffset - offsetX) * 8,
-                    y: (this.currentYOffset - offsetY) * 8
+                    x: (x + this.currentXOffset - offsetX) * chunkSize,
+                    y: (this.currentYOffset - offsetY) * chunkSize
                 }
             );
             row.push(container);
@@ -1077,8 +1170,8 @@ class Render {
             //     }
             // );
             const array = this.getBlockArray({
-                x: (xMaxChunkLength - 1 + this.currentXOffset) * 8,
-                y: (y + this.currentYOffset - offsetY) * 8
+                x: (xMaxChunkLength - 1 + this.currentXOffset) * chunkSize,
+                y: (y + this.currentYOffset - offsetY) * chunkSize
             });
 
             const container = this.renderRChunk(
@@ -1094,8 +1187,8 @@ class Render {
                         (renderChunkSize + 1)
                 },
                 {
-                    x: (xMaxChunkLength - 1 + this.currentXOffset) * 8,
-                    y: (y + this.currentYOffset - offsetY) * 8
+                    x: (xMaxChunkLength - 1 + this.currentXOffset) * chunkSize,
+                    y: (y + this.currentYOffset - offsetY) * chunkSize
                 }
             );
 
@@ -1109,7 +1202,7 @@ class Render {
 
     // 向最下方添加一排区块
     private addBottomRow() {
-        const row: Container[] = [];
+        const row: ExtendedContainer[] = [];
         // eslint-disable-next-line unicorn/no-array-for-each
         this.rengerGrid.shift()?.forEach((container) => {
             container.destroy();
@@ -1139,8 +1232,10 @@ class Render {
             //     }
             // );
             const array = this.getBlockArray({
-                x: (x + this.currentXOffset - offsetX) * 8,
-                y: (this.currentYOffset - offsetY + yMaxChunkLength) * 8
+                x: (x + this.currentXOffset - offsetX) * chunkSize,
+                y:
+                    (this.currentYOffset - offsetY + yMaxChunkLength) *
+                    chunkSize
             });
             const container = this.renderRChunk(
                 array,
@@ -1157,8 +1252,10 @@ class Render {
                     // y: yMaxChunkLength * rendeerChunkHeight
                 },
                 {
-                    x: (x + this.currentXOffset - offsetX) * 8,
-                    y: (this.currentYOffset - offsetY + yMaxChunkLength) * 8
+                    x: (x + this.currentXOffset - offsetX) * chunkSize,
+                    y:
+                        (this.currentYOffset - offsetY + yMaxChunkLength) *
+                        chunkSize
                 }
             );
             row.push(container);
@@ -1198,8 +1295,8 @@ class Render {
             //     }
             // );
             const array = this.getBlockArray({
-                x: (0 + this.currentXOffset - offsetX) * 8,
-                y: (y + this.currentYOffset - offsetY) * 8
+                x: (0 + this.currentXOffset - offsetX) * chunkSize,
+                y: (y + this.currentYOffset - offsetY) * chunkSize
             });
             const container = this.renderRChunk(
                 array,
@@ -1216,8 +1313,8 @@ class Render {
                         (renderChunkSize + 1)
                 },
                 {
-                    x: (0 + this.currentXOffset - offsetX) * 8,
-                    y: (y + this.currentYOffset - offsetY) * 8
+                    x: (0 + this.currentXOffset - offsetX) * chunkSize,
+                    y: (y + this.currentYOffset - offsetY) * chunkSize
                 }
             );
 
