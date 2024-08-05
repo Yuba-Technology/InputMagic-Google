@@ -92,7 +92,6 @@ async function blockMaker(request: string) {
 //     return response;
 // }
 // const response: string = await blockMaker("coool kitty");
-const result:{ [key: string]: { blockcolor: string , blockdes:string } } = await blockMaker("google logo");
-console.log(result);
+const result:{ [key: string]: string } = await blockMaker("google logo");
 render.addNewBlockType(result);
 export { blockMaker };

@@ -874,16 +874,21 @@ class Render {
     }
 
     addNewBlockType(aiBlockData: {
-        [key: string]: { blockcolor: string; blockdes: string };
+        [key: string]: string;
     }) {
         for (const key in aiBlockData) {
-            const keyMody: string = extractFirstKey(key);
             if (!Object.hasOwn(aiBlockData, key)) continue;
-            console.log(key);
-            const blockData = aiBlockData[key];
-            console.log(blockData);
-            const color = blockData.blockcolor;
-            colorMapper[key] = color;
+            // console.log(key);
+            const keyMody: string = extractFirstKey(key);
+            // console.log(keyMody);
+            const blockData:string = aiBlockData[key];
+            // console.log(blockData);
+            
+            // console.log(typeof(blockData));
+            if (!blockData.includes("#")) continue;
+            colorMapper[keyMody] = blockData;
+            // keyMody : name of the block
+            // blockData: 在那个if排除错误之后，是颜色，上面的if必须保留！必须保留！
         }
 
         console.log(colorMapper);
