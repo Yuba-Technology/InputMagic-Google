@@ -3,6 +3,7 @@
 $google-red: #ea4335 !default;
 $google-yellow: #fbbc05 !default;
 $google-green: #34a853 !default;
+$google-blue: #4285f4 !default;
 
 body {
     margin: 0;
@@ -10,7 +11,7 @@ body {
     overflow: hidden;
 }
 
-div {
+.input-wrapper {
     margin: auto;
     position: absolute;
     top: 200px;
