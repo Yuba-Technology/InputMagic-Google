@@ -68,10 +68,7 @@ class Inventory {
     setItem(index: number, item: Item) {
         this.items[index] = item;
 
-        // If indedx < Inventory.LENGTH, then we have to redraw the inventory
-        if (index < Inventory.LENGTH) {
-            this.draw();
-        }
+        this.draw();
     }
 
     addItem(item: Item) {
@@ -104,6 +101,15 @@ class Inventory {
                 this.handleSelect(i);
             });
             this.element.append(element);
+        }
+
+        const backpack = document.getElementById("backpack-list")!;
+        backpack.innerHTML = "";
+        for (const item of this.items) {
+            const element = ItemFactory.create(item.type, item.color);
+            element.style.width = "50px";
+            element.style.height = "50px";
+            backpack.append(element);
         }
     }
 }

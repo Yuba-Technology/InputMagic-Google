@@ -79,6 +79,7 @@
     },
     "dependencies": {
         "@google/generative-ai": "^0.16.0",
+        "bootstrap": "^5.3.3",
         "deep-equal": "^2.2.3",
         "node-fetch": "^3.3.2",
         "pixi.js": "^8.2.4"

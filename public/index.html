@@ -10,12 +10,32 @@
 </head>
 
 <body>
-    <div class="input-wrapper">
-        <input type="text" id="form1" placeholder="type in the blocks you need" />
-        <input type="submit" id="button" value="Enter" />
+    <!-- <div class="input-wrapper">
+
+    </div> -->
+
+    <button type="button" id="backpack-entry" data-bs-toggle="modal" data-bs-target="#backpack"></button>
+
+    <!-- 模态框 -->
+    <div class="modal" id="backpack">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <button type="button" class="btn-close" style="display: none;" data-bs-dismiss="modal"></button>
+
+                <!-- 模态框内容 -->
+                <div class="modal-body">
+                    <div class="input-group">
+                        <input type="text" id="form1" class="form-control" placeholder="type in the blocks you need" />
+                        <input type="submit" id="button" class="btn btn-primary" value="Enter" />
+                    </div>
+                    <ul id="backpack-list"></ul>
+                </div>
+
+            </div>
+        </div>
     </div>
     <ul id="inventory">
-        </div>
 </body>
 
 </html>

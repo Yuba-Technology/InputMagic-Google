@@ -16,6 +16,7 @@ import { Dimension } from "@/data/map/dimension";
 import { Generator3D } from "@/data/map/generator/3d";
 import { generate2DArray, traverse3DArray } from "@/data/map/utils";
 import { eventBus } from "@/data/event-bus";
+import { KeyEvent } from "@/control/keyboard";
 import { PlayerMoveEventData } from "@/control/player";
 
 /**
@@ -150,6 +151,13 @@ window.addEventListener("keyup", (event) => {
     if (key >= 1 && key <= 6) {
         keyState.lastKey = null;
         keyState.isActive = false;
+    }
+});
+
+eventBus.on("keychange", (data: unknown) => {
+    console.log(data);
+    if ((data as KeyEvent).pressedKeys.has("b")) {
+        document.getElementById("backpack-entry")!.click();
     }
 });
 

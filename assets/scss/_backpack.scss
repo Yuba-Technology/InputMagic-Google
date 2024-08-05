@@ -1,0 +1,12 @@
+#backpack-list {
+    display: flex;
+    flex-wrap: wrap;
+
+    li {
+        cursor: pointer;
+
+        div {
+            border: 1px solid black;
+        }
+    }
+}
